@@ -6,7 +6,7 @@ mode: rent            # "rent" (location) ou "buy" (achat)
 
 mail:
   imap_host: imap.gmail.com
-  folder: INBOX        # ou le nom d'un libellé Gmail (ex: "alertes-immo")
+  folder: alertes-immo        # ou le nom d'un libellé Gmail (ex: "alertes-immo")
   days_back: 3         # on relit les mails des N derniers jours (les doublons sont ignorés)
   sender_contains:     # on ne lit que les mails dont l'expéditeur contient un de ces mots
     - seloger
@@ -28,10 +28,10 @@ sources:
 # ---------------- FILTRES (mets null pour désactiver) ----------------
 filters:
   price_min: null
-  price_max: 1300             # loyer (ou prix d'achat en mode buy)
+  price_max: 850             # loyer (ou prix d'achat en mode buy)
   total_max: null             # loyer + charges
   charges_max: null
-  surface_min: 25
+  surface_min: 35
   surface_max: null
   rooms_min: 2
   rooms_max: null
@@ -40,8 +40,8 @@ filters:
   exclude_ground_floor: true  # rejette le rez-de-chaussée
   elevator_required_from_floor: 4   # si étage >= 4, ascenseur obligatoire
   dpe_allowed: [A, B, C, D, E]      # null pour désactiver
-  furnished: null             # true = meublé seulement, false = non meublé, null = peu importe
-  zipcodes_allowed: []        # ex: ["75011", "75020"]  ([] = tous)
+  furnished: false             # true = meublé seulement, false = non meublé, null = peu importe
+  zipcodes_allowed: ["78","95","92"]        # ex: ["75011", "75020"]  ([] = tous)
   cities_allowed: []          # ex: ["Paris", "Montreuil"]
   exclude_keywords:
     - rez-de-chaussee
@@ -51,7 +51,7 @@ filters:
     - nue-propriete
     - sous-sol
     - bruyant
-  require_any_keywords: []    # ex: ["balcon", "terrasse"]  ([] = aucun)
+  require_any_keywords: ["parking"]    # ex: ["balcon", "terrasse"]  ([] = aucun)
   on_missing: keep            # info absente de l'annonce : "keep" (garder) ou "reject"
 
 # ---------------- NOTE DU QUARTIER ----------------
