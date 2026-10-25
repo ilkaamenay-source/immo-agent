@@ -6,7 +6,7 @@ mode: rent            # "rent" (location) ou "buy" (achat)
 
 mail:
   imap_host: imap.gmail.com
-  folder: alertes-immo        # ou le nom d'un libellé Gmail (ex: "alertes-immo")
+  folder: alertes-immo        # libellé Gmail (ou INBOX pour toute la boîte)
   days_back: 3         # on relit les mails des N derniers jours (les doublons sont ignorés)
   sender_contains:     # on ne lit que les mails dont l'expéditeur contient un de ces mots
     - seloger
@@ -28,7 +28,7 @@ sources:
 # ---------------- FILTRES (mets null pour désactiver) ----------------
 filters:
   price_min: null
-  price_max: 850             # loyer (ou prix d'achat en mode buy)
+  price_max: 850              # loyer (ou prix d'achat en mode buy)
   total_max: null             # loyer + charges
   charges_max: null
   surface_min: 35
@@ -40,8 +40,9 @@ filters:
   exclude_ground_floor: true  # rejette le rez-de-chaussée
   elevator_required_from_floor: 4   # si étage >= 4, ascenseur obligatoire
   dpe_allowed: [A, B, C, D, E]      # null pour désactiver
-  furnished: false             # true = meublé seulement, false = non meublé, null = peu importe
-  zipcodes_allowed: ["78","95","92"]        # ex: ["75011", "75020"]  ([] = tous)
+  furnished: false            # true = meublé seulement, false = non meublé, null = peu importe
+  zipcodes_allowed: ["78", "95", "92"]   # début de code postal accepté : "78" = tout le 78 ; "75011" = ce code exact ([] = tous)
+  parking_required: true      # true = rejette si l'annonce indique PAS de parking (info absente = gardée, voir on_missing)
   cities_allowed: []          # ex: ["Paris", "Montreuil"]
   exclude_keywords:
     - rez-de-chaussee
@@ -51,7 +52,7 @@ filters:
     - nue-propriete
     - sous-sol
     - bruyant
-  require_any_keywords: ["parking"]    # ex: ["balcon", "terrasse"]  ([] = aucun)
+  require_any_keywords: []    # ex: ["balcon", "terrasse"]  ([] = aucun)
   on_missing: keep            # info absente de l'annonce : "keep" (garder) ou "reject"
 
 # ---------------- NOTE DU QUARTIER ----------------
@@ -64,9 +65,14 @@ scoring:
   min_score_to_notify: null   # ex: 6 -> n'envoie que les annonces notées >= 6/10
   walking_speed_m_per_min: 75
 
+transport:
+  max_walk_min: 15            # marche max acceptée jusqu'à une station (métro/RER/train/tram)
+  ideal_walk_min: 5           # <= 5 min à pied = 10/10 ; la note baisse ensuite jusqu'à 5/10 à 15 min
+  reject_if_no_station: false # true = rejette les annonces sans station dans ce délai
+
 limits:
   max_new_per_run: 25         # protège ton quota Gemini / la durée du job
-  radius_m: 600               # rayon d'analyse autour de l'annonce
+  radius_m: 600               # rayon pour commerces, arrêts de bus, parcs (indépendant des stations)
 
 gemini:
   model: gemini-2.5-flash

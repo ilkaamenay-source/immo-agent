@@ -8,7 +8,7 @@ from . import llm
 from .util import HEADERS, to_number
 
 FIELDS = ["title", "price", "charges", "surface", "rooms", "floor", "has_elevator", "dpe",
-          "address", "city", "zipcode", "furnished", "description"]
+          "address", "city", "zipcode", "furnished", "has_parking", "description"]
 
 def fetch_page(url):
     try:
@@ -41,6 +41,7 @@ def heuristics(text):
     if m: d["surface"] = to_number(m.group(1))
     m = re.search(r"(\d+)\s*pi[èe]ces?", t, re.I)
     if m: d["rooms"] = int(m.group(1))
+    if re.search(r"\b(parking|garage|box)\b", t, re.I): d["has_parking"] = True
     if re.search(r"rez[- ]de[- ]chauss[ée]e|\brdc\b", t, re.I): d["floor"] = 0
     m = re.search(r"(\d+)\s*(?:er|e|ème|eme)?\s*[ée]tage", t, re.I)
     if m and "floor" not in d: d["floor"] = int(m.group(1))
@@ -56,7 +57,7 @@ Réponds UNIQUEMENT par un JSON avec ces clés (null si l'info est absente, n'in
 title (str), price (nombre en euros, {'loyer mensuel' if mode == 'rent' else "prix de vente"}),
 charges (nombre €/mois ou null), surface (nombre m²), rooms (nombre de pièces), floor (entier, 0 = rez-de-chaussée),
 has_elevator (true/false/null), dpe (lettre A-G ou null), address (str), city (str), zipcode (str),
-furnished (true/false/null), description (résumé factuel en 300 caractères max).
+furnished (true/false/null), has_parking (true si parking/garage/box inclus ou mentionné, false si explicitement absent, sinon null), description (résumé factuel en 300 caractères max).
 
 Déjà trouvé (à vérifier/compléter) : {json.dumps(known, ensure_ascii=False)}
 Données structurées : {json.dumps(jsonld, ensure_ascii=False)[:2500]}

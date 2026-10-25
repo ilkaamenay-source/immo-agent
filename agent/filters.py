@@ -40,11 +40,18 @@ def evaluate(l, f, quick=False):
     elif f.get("dpe_allowed") and missing_reject:
         why.append("DPE inconnu")
 
+    if f.get("parking_required"):
+        hp = l.get("has_parking")
+        if hp is False or (hp is None and missing_reject):
+            why.append("pas de parking" if hp is False else "parking inconnu")
+
     if f.get("furnished") is not None and l.get("furnished") is not None and l["furnished"] != f["furnished"]:
         why.append("meublé/non meublé ne correspond pas")
 
-    if f.get("zipcodes_allowed") and l.get("zipcode") and str(l["zipcode"]) not in map(str, f["zipcodes_allowed"]):
-        why.append(f"code postal {l['zipcode']}")
+    # "78" accepte tout le département (78700, 78100...) ; "75011" accepte uniquement ce code exact
+    if f.get("zipcodes_allowed") and l.get("zipcode"):
+        if not any(str(l["zipcode"]).startswith(str(z)) for z in f["zipcodes_allowed"]):
+            why.append(f"code postal {l['zipcode']}")
     if f.get("cities_allowed") and l.get("city"):
         if norm(l["city"]) not in [norm(x) for x in f["cities_allowed"]]:
             why.append(f"ville {l['city']}")
