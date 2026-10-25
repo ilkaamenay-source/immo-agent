@@ -64,7 +64,7 @@ def listing_lines(l, cfg):
     if l.get("dpe"): extra.append(f"DPE {l['dpe']}")
     if l.get("has_parking"): extra.append("parking")
     if extra: lines.append("🏷️ " + ", ".join(extra))
-    lines.append(f"🔗 {l['url']}")
+    if l.get("url"): lines.append(f"🔗 {l['url']}")
     return lines
 
 def format_message(l, analysis, score, parts, cfg):

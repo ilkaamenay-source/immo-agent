@@ -4,8 +4,11 @@ import argparse, os, re, yaml
 from . import commune, extractor, filters, mail_reader, neighborhood, notifier, scoring
 
 URL_RE = re.compile(r"https?://[^\s<>\"]+")
+PRICE_RE = re.compile(r"\d\s*€|€\s*\d")
+AREA_RE = re.compile(r"\d\s*m\s?[²2]", re.I)
 HELP = ("👋 Envoie-moi :\n"
         "• le lien d'une annonce → je l'analyse (filtres, quartier, transport futur, commune)\n"
+        "• si le site est protégé (SeLoger, Leboncoin…), ajoute après le lien le texte copié de l'annonce (prix, surface, étage, DPE…)\n"
         "• une adresse ou une ville (ex : « 12 rue de la Paroisse Versailles » ou « Poissy ») → analyse du quartier et de la commune\n\n"
         "La réponse arrive en 30 à 90 secondes.")
 
@@ -16,17 +19,28 @@ def run(text, chat_id, cfg, dry_run=False):
         send(HELP); return
     cache = {}
     m = URL_RE.search(t)
+    pasted = URL_RE.sub(" ", t).strip()                      # texte éventuellement collé avec le lien
     verdict = None
-    if m:
-        url = m.group(0).rstrip(".,)")
-        name, _ = mail_reader._source_for(url, cfg["sources"])
-        listing = extractor.build_listing({"url": url, "source": name or "manuel", "email_text": ""}, cfg)
+    if m or (PRICE_RE.search(t) and AREA_RE.search(t) and len(t) > 60):
+        url = m.group(0).rstrip(".,)") if m else None
+        name = (mail_reader._source_for(url, cfg["sources"])[0] if url else None)
+        text_ctx = pasted[:4000] if (m and len(pasted) > 20) or not m else ""
+        listing = extractor.build_listing({"url": url, "source": name or "manuel", "email_text": text_ctx}, cfg)
         ok, why = filters.evaluate(listing, cfg["filters"])
         if listing.get("transaction") and listing["transaction"] != cfg["mode"]:
             ok, why = False, why + [f"annonce de type {listing['transaction']} (ton mode : {cfg['mode']})"]
         verdict = "✅ Cette annonce passe tes filtres." if ok else "❌ Elle ne passe pas tes filtres : " + ", ".join(why)
-        head = ["🔎 ANALYSE DE L'ANNONCE", ""] + (notifier.listing_lines(listing, cfg) if not listing.get("unparsed")
-               else ["⚠️ Contenu de la page illisible (site protégé ?)", f"🔗 {url}"])
+        short = url.split("?")[0].split("#")[0] if url else None
+        if listing.get("unparsed"):
+            loc = " ".join(filter(None, [listing.get("zipcode"), listing.get("city")])) or "inconnue"
+            head = ["🔎 ANALYSE DE L'ANNONCE", "",
+                    "⚠️ Page protégée (illisible pour un robot) : je me base sur le lien (type, ville, code postal).",
+                    "💡 Pour une analyse complète, renvoie le lien suivi du texte copié de l'annonce (prix, surface, étage, DPE…).",
+                    f"📍 Localisation lue dans le lien : {loc}"] + ([f"🔗 {short}"] if short else [])
+            verdict = ("ℹ️ Prix et surface inconnus : seuls le type, la ville et le code postal ont été contrôlés. "
+                       + ("✅ Rien d'incompatible avec tes filtres." if ok else "❌ " + ", ".join(why)))
+        else:
+            head = ["🔎 ANALYSE DE L'ANNONCE", ""] + notifier.listing_lines({**listing, "url": short or listing.get("url")}, cfg)
         head += ["", verdict]
         send("\n".join(head))
     else:

@@ -20,7 +20,7 @@ mail:
 # Sites reconnus. "url_regex" = motif d'une VRAIE page d'annonce (à ajuster
 # après avoir regardé tes emails réels, voir README).
 sources:
-  seloger:    {hosts: [seloger.com],    url_regex: "/annonces/|/detail"}
+  seloger:    {hosts: [seloger.com],    url_regex: "/annonces?/|/detail|/classified"}
   bienici:    {hosts: [bienici.com],    url_regex: "/annonce/"}
   pap:        {hosts: [pap.fr],         url_regex: "/annonces/"}
   leboncoin:  {hosts: [leboncoin.fr],   url_regex: "/ad/"}

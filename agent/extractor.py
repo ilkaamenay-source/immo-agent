@@ -124,15 +124,16 @@ def build_listing(cand, cfg, quick_filter=None):
     email_text = cand["email_text"]
     listing = {"url": cand["url"], "source": cand["source"], "email_text": email_text, "from_page": False}
 
-    if "bienici.com" in cand["url"]:
-        api = fetch_bienici(cand["url"])
+    url = cand.get("url") or ""
+    if "bienici.com" in url:
+        api = fetch_bienici(url)
         if api:
             listing.update(api); listing["from_page"] = True
             listing["unparsed"] = False
             return listing
         print("  [bienici] données directes indisponibles -> lecture de la page")
 
-    html = fetch_page(cand["url"])
+    html = fetch_page(url) if url else None
     listing["from_page"] = bool(html)
     jsonld, page_text = [], ""
     if html:
@@ -147,7 +148,7 @@ def build_listing(cand, cfg, quick_filter=None):
     # le texte de l'email est TOUJOURS pris en compte (la page peut être vide si chargée en JavaScript)
     base_text = " ".join(filter(None, [listing.get("title"), page_text[:4000], email_text]))
     listing.update({k: v for k, v in heuristics(base_text).items() if v is not None})
-    for k, v in url_hints(cand["url"]).items():      # le lien donne type/ville/code postal si le reste manque
+    for k, v in url_hints(url).items():      # le lien donne type/ville/code postal si le reste manque
         if listing.get(k) is None: listing[k] = v
 
     if quick_filter and not quick_filter(listing):
