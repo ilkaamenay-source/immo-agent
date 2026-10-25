@@ -1,7 +1,22 @@
 {
+ "2235cd7921d7032d": {
+  "status": "envoyé",
+  "ts": 1792933128,
+  "url": "https://www.bienici.com/annonce/immo-facile-61669475?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
+ },
  "63d04798e8195bd4": {
   "status": "rejeté",
   "ts": 1792889842,
   "url": "https://www.bienici.com/annonce/immo-facile-61627114?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
+ },
+ "a69438b0e1644f7a": {
+  "status": "envoyé",
+  "ts": 1792933375,
+  "url": "https://www.bienici.com/annonce/century-21-202_639_676595?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
+ },
+ "ad7efb751398d242": {
+  "status": "envoyé",
+  "ts": 1792933252,
+  "url": "https://www.bienici.com/annonce/century-21-202_639_677303?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
  }
 }
