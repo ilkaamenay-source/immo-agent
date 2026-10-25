@@ -66,6 +66,19 @@ Texte de la page :
 {page_text[:6500]}"""
     return llm.generate_json(prompt, model) or {}
 
+def url_hints(url):
+    """L'adresse du lien contient souvent le type d'annonce, la ville et le code postal (même si la page est bloquée)."""
+    path = urlparse(url).path.lower()
+    d = {}
+    if re.search(r"/(location|locations|louer)(/|-|$)", path): d["transaction"] = "rent"
+    elif re.search(r"/(vente|ventes|achat|acheter)(/|-|$)", path): d["transaction"] = "buy"
+    m = re.search(r"/([a-z0-9\-]*?[a-z])-(\d{5})(?=/|$|\.)", path)
+    if m:
+        d["zipcode"] = m.group(2)
+        slug = m.group(1).split("/")[-1]
+        d["city"] = " ".join(w.capitalize() for w in re.split(r"-+", slug) if w)
+    return d
+
 GENERIC_TITLES = ("toutes les annonces immobili", "annonces immobili")
 
 def _first(v):
@@ -134,6 +147,8 @@ def build_listing(cand, cfg, quick_filter=None):
     # le texte de l'email est TOUJOURS pris en compte (la page peut être vide si chargée en JavaScript)
     base_text = " ".join(filter(None, [listing.get("title"), page_text[:4000], email_text]))
     listing.update({k: v for k, v in heuristics(base_text).items() if v is not None})
+    for k, v in url_hints(cand["url"]).items():      # le lien donne type/ville/code postal si le reste manque
+        if listing.get(k) is None: listing[k] = v
 
     if quick_filter and not quick_filter(listing):
         listing["rejected_early"] = True

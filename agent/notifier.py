@@ -65,15 +65,19 @@ def listing_lines(l, cfg):
     return lines
 
 def format_message(l, analysis, score, parts, cfg):
-    if l.get("unparsed"):
+    if l.get("unparsed") and not (l.get("zipcode") or l.get("city")):
         return ("🏠 ANNONCE NON ANALYSÉE\n\n⚠️ Le contenu de la page n'a pas pu être lu : aucun filtre n'a pu être "
                 "appliqué. À vérifier à la main :\n🔗 " + l["url"])
-    lines = ["🏠 NOUVELLE ANNONCE", ""] + listing_lines(l, cfg)
+    title = "🏠 ANNONCE PARTIELLEMENT LUE" if l.get("unparsed") else "🏠 NOUVELLE ANNONCE"
+    lines = [title, ""] + listing_lines(l, cfg)
+    if l.get("unparsed"):
+        lines += ["", "⚠️ Page protégée : prix et surface inconnus, donc non vérifiés avec tes filtres (seuls le type, la ville "
+                  "et le code postal tirés du lien ont été contrôlés). Ouvre le lien pour vérifier."]
     if analysis and analysis.get("osm"):
         lines += quartier_lines(analysis, score, parts)
     else:
         lines += ["", analysis_missing_line(analysis)]
-    if not l.get("from_page"): lines.append("\n⚠️ Page non lisible : infos tirées de l'email seulement.")
+    if not l.get("from_page") and not l.get("unparsed"): lines.append("\n⚠️ Page non lisible : infos tirées de l'email seulement.")
     return "\n".join(lines)
 
 def format_commune(c):

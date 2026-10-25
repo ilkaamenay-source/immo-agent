@@ -76,8 +76,16 @@ def extract_candidates(mails, sources, max_links_per_mail=40):
             if not _is_listing(url, sources):
                 continue
             url = url.split("#")[0]
-            parent = a.find_parent(["td", "div", "tr", "li"])
-            ctx = (parent.get_text(" ", strip=True) if parent else a.get_text(" ", strip=True))[:500]
+            ctx = a.get_text(" ", strip=True)
+            node = a
+            for _ in range(8):                      # on remonte dans l'email jusqu'à trouver le bloc de l'annonce
+                node = node.find_parent(["td", "tr", "table", "div", "li"])
+                if node is None: break
+                t = node.get_text(" ", strip=True)
+                if len(t) > 700: break              # on a dépassé le bloc : on garde le précédent
+                ctx = t
+                if "€" in t and re.search(r"m\s?[²2]", t): break
+            ctx = ctx[:500]
             name, _ = _source_for(url, sources)
             if url not in seen:
                 seen.add(url)
