@@ -27,7 +27,7 @@ export default {
       return new Response("ok");
     }
 
-    const text = msg.text.slice(0, 1000);
+    const text = msg.text.slice(0, 4000);   // limite de Telegram : 4096 caractères
     const gh = await fetch(
       `https://api.github.com/repos/${env.GH_REPO}/actions/workflows/telegram.yml/dispatches`,
       {
