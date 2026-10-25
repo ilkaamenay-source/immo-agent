@@ -82,6 +82,6 @@ limits:
   radius_m: 600               # rayon pour commerces, arrêts de bus, parcs (indépendant des stations)
 
 gemini:
-  model: gemini-2.5-flash
+  model: auto                 # auto = l'agent choisit un modèle Gemini disponible avec ta clé (les noms changent souvent)
   use_for_extraction: true    # lit les pages d'annonces inconnues
   use_for_neighborhood: true  # rédige le résumé du quartier (mis en cache)

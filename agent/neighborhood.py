@@ -10,6 +10,8 @@ OVERPASS = ["https://overpass-api.de/api/interpreter",
             "https://overpass.kumi.systems/api/interpreter",
             "https://overpass.openstreetmap.fr/api/interpreter"]
 _state = {"last_ok": 0, "failures": 0}
+# Les serveurs Overpass refusent (HTTP 406/403) les clients qui se font passer pour un navigateur : on s'identifie.
+OSM_HEADERS = {"User-Agent": "immo-agent/1.0 (+https://github.com/ilkaamenay-source/immo-agent)", "Accept": "*/*"}
 
 def _overpass(query):
     """Interroge les serveurs OpenStreetMap publics (souvent saturés) : plusieurs serveurs, 2 tours, journal des erreurs.
@@ -22,7 +24,7 @@ def _overpass(query):
         for ep in order:
             host = ep.split("/")[2]
             try:
-                r = requests.post(ep, data={"data": query}, headers=HEADERS, timeout=25)
+                r = requests.post(ep, data={"data": query}, headers=OSM_HEADERS, timeout=15)
                 if r.status_code == 200:
                     _state["last_ok"] = OVERPASS.index(ep); _state["failures"] = 0
                     return r.json()
@@ -36,7 +38,7 @@ RAIL = ("station", "halt", "subway_entrance", "tram_stop")
 
 def reverse(lat, lon):
     try:
-        r = requests.get("https://api-adresse.data.gouv.fr/reverse/", params={"lat": lat, "lon": lon}, headers=HEADERS, timeout=15)
+        r = requests.get("https://api-adresse.data.gouv.fr/reverse/", params={"lat": lat, "lon": lon}, headers=OSM_HEADERS, timeout=15)
         feats = r.json().get("features") or []
         return feats[0]["properties"] if feats else None
     except (requests.RequestException, ValueError, KeyError):
@@ -73,19 +75,19 @@ def osm_around(lat, lon, radius, walk_speed, max_walk_min=15):
     # rayon de recherche des stations déduit du temps de marche (avec 25 % de détour)
     t_radius = int(max_walk_min * walk_speed / 1.25)
     a = f"around:{t_radius},{lat},{lon}"
-    q_transit = f"""[out:json][timeout:20];(
-      nwr({a})[railway~"^(station|halt|subway_entrance|tram_stop)$"];
-      nwr({a})["name"]["construction"="station"];
-      nwr({a})["name"]["proposed"="station"];
-      nwr({a})["name"]["proposed:railway"="station"];
-      nwr({a})["name"]["construction:railway"="station"];
+    q_transit = f"""[out:json][timeout:15];(
+      nw({a})[railway~"^(station|halt|subway_entrance|tram_stop)$"];
+      nw({a})["name"]["construction"="station"];
+      nw({a})["name"]["proposed"="station"];
+      nw({a})["name"]["proposed:railway"="station"];
+      nw({a})["name"]["construction:railway"="station"];
     );out tags center;"""
     r = f"around:{radius},{lat},{lon}"
-    q_amen = f"""[out:json][timeout:20];(
-      nwr({r})[highway=bus_stop];
-      nwr({r})[shop~"^(supermarket|convenience|bakery|butcher|greengrocer)$"];
-      nwr({r})[amenity~"^(pharmacy|school|kindergarten|restaurant|cafe)$"];
-      nwr({r})[leisure=park];
+    q_amen = f"""[out:json][timeout:15];(
+      nw({r})[highway=bus_stop];
+      nw({r})[shop~"^(supermarket|convenience|bakery|butcher|greengrocer)$"];
+      nw({r})[amenity~"^(pharmacy|school|kindergarten|restaurant|cafe)$"];
+      nw({r})[leisure=park];
     );out tags center;"""
     data = _overpass(q_transit)            # les stations sont indispensables
     if data is None: return None
