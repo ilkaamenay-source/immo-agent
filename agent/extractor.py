@@ -2,6 +2,7 @@
 Étape 1 (gratuite) : JSON-LD / balises og: / regex.
 Étape 2 (Gemini)   : complète les champs manquants, seulement pour les annonces qui ont passé le pré-filtre."""
 import json, re
+from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 from . import llm
@@ -65,19 +66,73 @@ Texte de la page :
 {page_text[:6500]}"""
     return llm.generate_json(prompt, model) or {}
 
+GENERIC_TITLES = ("toutes les annonces immobili", "annonces immobili")
+
+def _first(v):
+    return v[0] if isinstance(v, list) and v else v
+
+def from_bienici_json(d):
+    """Convertit le JSON interne de Bien'ici en annonce normalisée (champs absents = None)."""
+    g = d.get
+    desc = re.sub(r"<[^>]+>", " ", str(g("description") or ""))
+    desc = re.sub(r"\s+", " ", desc).strip()
+    out = {
+        "title": g("title"), "price": to_number(_first(g("price"))),
+        "charges": to_number(g("charges") or g("monthlyCharges")),
+        "surface": to_number(g("surfaceArea")), "rooms": g("roomsQuantity"),
+        "floor": g("floor"), "dpe": g("energyClassification"),
+        "city": g("city"), "zipcode": g("postalCode"),
+        "has_elevator": g("hasElevator"), "description": desc[:400],
+        "transaction": {"rent": "rent", "buy": "buy"}.get(g("adType")),
+    }
+    if str(out["dpe"]).upper() not in list("ABCDEFG"): out["dpe"] = None
+    if (g("parkingPlacesQuantity") or 0) > 0 or re.search(r"\b(parking|garage|box)\b", desc, re.I):
+        out["has_parking"] = True
+    pos = g("blurInfo", {}) or {}
+    pos = pos.get("centroid") or pos.get("position") or {}
+    lat = g("latitude") or g("lat") or pos.get("lat")
+    lon = g("longitude") or g("lon") or pos.get("lon")
+    if lat and lon: out["lat"], out["lon"] = float(lat), float(lon)
+    return {k: v for k, v in out.items() if v is not None}
+
+def fetch_bienici(url):
+    """Les pages Bien'ici sont chargées en JavaScript : on lit directement les données de l'annonce."""
+    ad_id = urlparse(url).path.rstrip("/").split("/")[-1]
+    try:
+        r = requests.get("https://www.bienici.com/realEstateAd.json", params={"id": ad_id}, headers=HEADERS, timeout=20)
+        if r.status_code != 200: return None
+        data = from_bienici_json(r.json())
+        return data if (data.get("price") or data.get("surface")) else None
+    except (requests.RequestException, ValueError, AttributeError, TypeError):
+        return None
+
 def build_listing(cand, cfg, quick_filter=None):
     """cand = {url, source, email_text}. quick_filter(listing)->bool permet d'éviter l'appel Gemini."""
+    email_text = cand["email_text"]
+    listing = {"url": cand["url"], "source": cand["source"], "email_text": email_text, "from_page": False}
+
+    if "bienici.com" in cand["url"]:
+        api = fetch_bienici(cand["url"])
+        if api:
+            listing.update(api); listing["from_page"] = True
+            listing["unparsed"] = False
+            return listing
+        print("  [bienici] données directes indisponibles -> lecture de la page")
+
     html = fetch_page(cand["url"])
-    listing = {"url": cand["url"], "source": cand["source"], "email_text": cand["email_text"], "from_page": bool(html)}
+    listing["from_page"] = bool(html)
     jsonld, page_text = [], ""
     if html:
         soup = BeautifulSoup(html, "html.parser")
         jsonld = _jsonld(soup)
         og = {m.get("property"): m.get("content") for m in soup.find_all("meta", property=True)}
-        listing["title"] = og.get("og:title") or (soup.title.string.strip() if soup.title and soup.title.string else None)
-        for s in soup(["script", "style", "noscript"]): s.decompose()
+        title = og.get("og:title") or (soup.title.string.strip() if soup.title and soup.title.string else None)
+        if title and not any(g in title.lower() for g in GENERIC_TITLES):
+            listing["title"] = title
+        for t in soup(["script", "style", "noscript"]): t.decompose()
         page_text = soup.get_text(" ", strip=True)
-    base_text = " ".join(filter(None, [listing.get("title"), page_text[:4000] if page_text else cand["email_text"]]))
+    # le texte de l'email est TOUJOURS pris en compte (la page peut être vide si chargée en JavaScript)
+    base_text = " ".join(filter(None, [listing.get("title"), page_text[:4000], email_text]))
     listing.update({k: v for k, v in heuristics(base_text).items() if v is not None})
 
     if quick_filter and not quick_filter(listing):
@@ -85,11 +140,13 @@ def build_listing(cand, cfg, quick_filter=None):
         return listing
 
     missing = [f for f in ("price", "surface", "rooms", "floor", "dpe", "city", "zipcode") if listing.get(f) is None]
-    if cfg["gemini"]["use_for_extraction"] and (missing or html) and (page_text or cand["email_text"]):
+    llm_text = (page_text[:6000] + "\nTEXTE DE L'EMAIL : " + email_text).strip()
+    if cfg["gemini"]["use_for_extraction"] and (missing or html) and llm_text:
         known = {k: listing.get(k) for k in FIELDS if listing.get(k) is not None}
-        got = _llm_fill(page_text or cand["email_text"], jsonld, known, cfg["gemini"]["model"], cfg["mode"])
+        got = _llm_fill(llm_text, jsonld, known, cfg["gemini"]["model"], cfg["mode"])
         for k in FIELDS:
             if got.get(k) is not None:
                 if k in ("price", "charges", "surface"): got[k] = to_number(got[k])
                 listing[k] = got[k]   # Gemini lit la page entière : il prime sur les regex
+    listing["unparsed"] = listing.get("price") is None and listing.get("surface") is None
     return listing

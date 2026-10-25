@@ -8,6 +8,9 @@ from .util import HEADERS
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 
 def geocode(l):
+    if l.get("lat") and l.get("lon"):   # position fournie par la source (ex. Bien'ici)
+        label = " ".join(filter(None, [l.get("zipcode"), l.get("city")])) or "position de l'annonce"
+        return {"lat": l["lat"], "lon": l["lon"], "citycode": l.get("zipcode"), "label": label, "score": None}
     q = " ".join(filter(None, [l.get("address"), l.get("zipcode"), l.get("city")]))
     if not q.strip(): return None
     try:
@@ -25,9 +28,11 @@ def _dist(lat1, lon1, lat2, lon2):
     a = 0.5 - math.cos((lat2 - lat1) * p) / 2 + math.cos(lat1 * p) * math.cos(lat2 * p) * (1 - math.cos((lon2 - lon1) * p)) / 2
     return 12742000 * math.asin(math.sqrt(a))
 
-def osm_around(lat, lon, radius, walk_speed):
+def osm_around(lat, lon, radius, walk_speed, max_walk_min=15):
+    # rayon de recherche des stations déduit du temps de marche (avec 25 % de détour)
+    t_radius = int(max_walk_min * walk_speed / 1.25)
     q = f"""[out:json][timeout:25];(
-      nwr(around:{radius},{lat},{lon})[railway~"^(station|halt|subway_entrance|tram_stop)$"];
+      nwr(around:{t_radius},{lat},{lon})[railway~"^(station|halt|subway_entrance|tram_stop)$"];
       nwr(around:{radius},{lat},{lon})[highway=bus_stop];
       nwr(around:{radius},{lat},{lon})[shop~"^(supermarket|convenience|bakery|butcher|greengrocer)$"];
       nwr(around:{radius},{lat},{lon})[amenity~"^(pharmacy|school|kindergarten|restaurant|cafe)$"];
@@ -50,10 +55,12 @@ def osm_around(lat, lon, radius, walk_speed):
         la = el.get("lat") or el.get("center", {}).get("lat"); lo = el.get("lon") or el.get("center", {}).get("lon")
         if la is None: continue
         d = _dist(lat, lon, la, lo)
+        is_transit = t.get("railway") in ("station", "halt", "subway_entrance", "tram_stop")
+        if not is_transit and d > radius: continue
         if t.get("railway") in ("station", "halt", "subway_entrance", "tram_stop"):
             name = t.get("name") or t.get("ref") or "?"
             kind = "tram" if t.get("railway") == "tram_stop" else ("métro/RER/train")
-            if (name, kind) not in seen_names:
+            if (name, kind) not in seen_names and round(d * 1.25 / walk_speed) <= max_walk_min:
                 seen_names.add((name, kind))
                 out["transit"].append({"name": name, "kind": kind, "dist_m": round(d), "walk_min": max(1, round(d * 1.25 / walk_speed))})
         elif t.get("highway") == "bus_stop": out["bus_stops"] += 1
@@ -109,7 +116,7 @@ non vérifiées) ; n'invente AUCUN chiffre ; si tu ne connais pas le secteur, me
 def analyze(listing, cfg, cache):
     geo = geocode(listing)
     if not geo: return None
-    osm = osm_around(geo["lat"], geo["lon"], cfg["limits"]["radius_m"], cfg["scoring"]["walking_speed_m_per_min"])
+    osm = osm_around(geo["lat"], geo["lon"], cfg["limits"]["radius_m"], cfg["scoring"]["walking_speed_m_per_min"], cfg["transport"]["max_walk_min"])
     time.sleep(1)
     risks = georisques(geo["lat"], geo["lon"])
     median = dvf_median_m2(geo["lat"], geo["lon"]) if cfg["mode"] == "buy" else None

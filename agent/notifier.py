@@ -2,6 +2,9 @@ import os, requests
 
 def format_message(l, analysis, score, parts, cfg):
     mode_label = "Loyer" if cfg["mode"] == "rent" else "Prix"
+    if l.get("unparsed"):
+        return ("🏠 ANNONCE NON ANALYSÉE\n\n⚠️ Le contenu de la page n'a pas pu être lu : aucun filtre n'a pu être "
+                "appliqué. À vérifier à la main :\n🔗 " + l["url"])
     lines = ["🏠 NOUVELLE ANNONCE", ""]
     if l.get("title"): lines.append(f"📌 {l['title'][:120]}")
     loc = " ".join(filter(None, [l.get("zipcode"), l.get("city")]))
@@ -32,7 +35,10 @@ def format_message(l, analysis, score, parts, cfg):
             for p in s.get("points_forts", [])[:3]: lines.append(f"✅ {p}")
             for p in s.get("points_attention", [])[:3]: lines.append(f"⚠️ {p}")
     else:
-        lines += ["", "ℹ️ Analyse du quartier indisponible (adresse introuvable)."]
+        if analysis is None:
+            lines += ["", "ℹ️ Analyse du quartier indisponible (adresse introuvable dans l'annonce)."]
+        else:
+            lines += ["", "ℹ️ Analyse du quartier indisponible (serveur de cartes OpenStreetMap injoignable à cet instant)."]
     if not l.get("from_page"): lines.append("\n⚠️ Page non lisible : infos tirées de l'email seulement.")
     return "\n".join(lines)
 

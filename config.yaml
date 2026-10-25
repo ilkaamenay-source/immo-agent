@@ -3,6 +3,7 @@
 # ============================================================
 
 mode: rent            # "rent" (location) ou "buy" (achat)
+on_unparsed: notify   # annonce illisible : "notify" (te prévient, sans filtre) ou "skip" (l'ignore)
 
 mail:
   imap_host: imap.gmail.com
@@ -28,7 +29,7 @@ sources:
 # ---------------- FILTRES (mets null pour désactiver) ----------------
 filters:
   price_min: null
-  price_max: 850              # loyer (ou prix d'achat en mode buy)
+  price_max: 900              # loyer (ou prix d'achat en mode buy)
   total_max: null             # loyer + charges
   charges_max: null
   surface_min: 35

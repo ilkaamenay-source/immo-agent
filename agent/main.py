@@ -3,6 +3,23 @@ from . import extractor, filters, mail_reader, neighborhood, notifier, scoring, 
 from .util import url_key
 
 SEEN, QUARTIERS = "state/seen.json", "state/quartiers.json"
+MANUAL = "manual_urls.txt"
+
+def load_manual_urls(path, sources):
+    """Liens collés à la main (annonces déjà en ligne avant la création des alertes)."""
+    try:
+        lines = open(path, encoding="utf-8").read().splitlines()
+    except FileNotFoundError:
+        return []
+    out, seen = [], set()
+    for ln in lines:
+        url = ln.strip().split()[0].split("#")[0] if ln.strip() else ""
+        if not url.startswith("http") or url in seen:
+            continue
+        seen.add(url)
+        name, _ = mail_reader._source_for(url, sources)
+        out.append({"url": url, "source": name or "manuel", "email_text": ""})
+    return out
 
 def process(cand, cfg, cache, dry_run):
     f = cfg["filters"]
@@ -10,10 +27,16 @@ def process(cand, cfg, cache, dry_run):
     l = extractor.build_listing(cand, cfg, quick_filter=quick)
     if l.get("rejected_early"):
         return "rejeté (pré-filtre)", filters.evaluate(l, f, quick=True)[1]
+    if l.get("transaction") and l["transaction"] != cfg["mode"]:
+        return "rejeté", [f"annonce de type {l['transaction']} (mode {cfg['mode']})"]
+    if l.get("unparsed") and cfg.get("on_unparsed", "notify") == "skip":
+        return "non analysée (page illisible)", []
     ok, why = filters.evaluate(l, f)
     if not ok:
         return "rejeté", why
     analysis = neighborhood.analyze(l, cfg, cache)
+    if cfg["transport"]["reject_if_no_station"] and analysis and analysis.get("osm") and not analysis["osm"]["transit"]:
+        return "rejeté", [f"aucune station à moins de {cfg['transport']['max_walk_min']} min à pied"]
     score, parts = scoring.compute(l, analysis, cfg) if analysis and analysis.get("osm") else (None, None)
     mn = cfg["scoring"].get("min_score_to_notify")
     if mn is not None and score is not None and score < mn:
@@ -36,6 +59,10 @@ def main():
         mails = mail_reader.fetch_emails(os.environ["GMAIL_USER"], os.environ["GMAIL_APP_PASSWORD"], cfg["mail"])
         cands = mail_reader.extract_candidates(mails, cfg["sources"])
         print(f"{len(mails)} email(s) lus, {len(cands)} lien(s) d'annonce")
+        manual = load_manual_urls(MANUAL, cfg["sources"])
+        print(f"{len(manual)} lien(s) dans {MANUAL}")
+        known = {c["url"] for c in cands}
+        cands += [m for m in manual if m["url"] not in known]
         cands = [c for c in cands if url_key(c["url"]) not in seen]
         print(f"{len(cands)} nouvelle(s) annonce(s)")
 
