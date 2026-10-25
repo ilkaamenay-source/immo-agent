@@ -29,7 +29,10 @@ def quartier_lines(analysis, score, parts):
         lines.append("🚇 " + "; ".join(f"{t['name']} ({t['kind']}, {t['walk_min']} min à pied)" for t in o["transit"][:3]))
     else:
         lines.append("🚇 Aucune station à proximité dans le temps de marche choisi")
-    lines.append(f"🛒 Autour : {o['shops']} commerces, {o['pharmacies']} pharmacie(s), {o['schools']} école(s), {o['parks']} parc(s), {o['bus_stops']} arrêts de bus")
+    if o.get("partial"):
+        lines.append("🛒 Commerces et services : données indisponibles (serveur OpenStreetMap occupé), note calculée sans eux")
+    else:
+        lines.append(f"🛒 Autour : {o['shops']} commerces, {o['pharmacies']} pharmacie(s), {o['schools']} école(s), {o['parks']} parc(s), {o['bus_stops']} arrêts de bus")
     if analysis.get("median_m2"): lines.append(f"💹 Médiane DVF du secteur : {analysis['median_m2']} €/m²")
     if analysis.get("risks"): lines.append("⚠️ Risques officiels : " + ", ".join(analysis["risks"]))
     lines += future_lines(analysis.get("future"))

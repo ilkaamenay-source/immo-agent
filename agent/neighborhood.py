@@ -5,7 +5,33 @@ import requests
 from . import llm, future
 from .util import HEADERS
 
-OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+OVERPASS = ["https://overpass-api.de/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.openstreetmap.fr/api/interpreter"]
+_state = {"last_ok": 0, "failures": 0}
+
+def _overpass(query):
+    """Interroge les serveurs OpenStreetMap publics (souvent saturés) : plusieurs serveurs, 2 tours, journal des erreurs.
+    Après 2 échecs complets dans la même exécution, on n'insiste plus (évite de bloquer tout le job)."""
+    if _state["failures"] >= 2:
+        return None
+    order = OVERPASS[_state["last_ok"]:] + OVERPASS[:_state["last_ok"]]
+    delay = 3
+    for _round in range(2):
+        for ep in order:
+            host = ep.split("/")[2]
+            try:
+                r = requests.post(ep, data={"data": query}, headers=HEADERS, timeout=25)
+                if r.status_code == 200:
+                    _state["last_ok"] = OVERPASS.index(ep); _state["failures"] = 0
+                    return r.json()
+                print(f"  [overpass] {host} -> HTTP {r.status_code}")
+            except (requests.RequestException, ValueError) as e:
+                print(f"  [overpass] {host} -> {type(e).__name__}")
+        time.sleep(delay); delay *= 2
+    _state["failures"] += 1
+    return None
 RAIL = ("station", "halt", "subway_entrance", "tram_stop")
 
 def reverse(lat, lon):
@@ -47,29 +73,25 @@ def osm_around(lat, lon, radius, walk_speed, max_walk_min=15):
     # rayon de recherche des stations déduit du temps de marche (avec 25 % de détour)
     t_radius = int(max_walk_min * walk_speed / 1.25)
     a = f"around:{t_radius},{lat},{lon}"
-    q = f"""[out:json][timeout:25];(
+    q_transit = f"""[out:json][timeout:20];(
       nwr({a})[railway~"^(station|halt|subway_entrance|tram_stop)$"];
       nwr({a})["name"]["construction"="station"];
       nwr({a})["name"]["proposed"="station"];
       nwr({a})["name"]["proposed:railway"="station"];
       nwr({a})["name"]["construction:railway"="station"];
-      nwr(around:{radius},{lat},{lon})[highway=bus_stop];
-      nwr(around:{radius},{lat},{lon})[shop~"^(supermarket|convenience|bakery|butcher|greengrocer)$"];
-      nwr(around:{radius},{lat},{lon})[amenity~"^(pharmacy|school|kindergarten|restaurant|cafe)$"];
-      nwr(around:{radius},{lat},{lon})[leisure=park];
     );out tags center;"""
-    data = None
-    for ep in OVERPASS:
-        try:
-            r = requests.post(ep, data={"data": q}, headers=HEADERS, timeout=40)
-            if r.status_code == 200:
-                data = r.json(); break
-        except (requests.RequestException, ValueError):
-            pass
-        time.sleep(2)
+    r = f"around:{radius},{lat},{lon}"
+    q_amen = f"""[out:json][timeout:20];(
+      nwr({r})[highway=bus_stop];
+      nwr({r})[shop~"^(supermarket|convenience|bakery|butcher|greengrocer)$"];
+      nwr({r})[amenity~"^(pharmacy|school|kindergarten|restaurant|cafe)$"];
+      nwr({r})[leisure=park];
+    );out tags center;"""
+    data = _overpass(q_transit)            # les stations sont indispensables
     if data is None: return None
+    amen = _overpass(q_amen)               # les commerces peuvent manquer (analyse partielle)
     out = {"transit": [], "all_transit": [], "future": [], "bus_stops": 0, "shops": 0, "pharmacies": 0,
-           "schools": 0, "food": 0, "parks": 0}
+           "schools": 0, "food": 0, "parks": 0, "partial": amen is None}
     seen_names = set()
     for el in data.get("elements", []):
         t = el.get("tags", {})
@@ -88,8 +110,10 @@ def osm_around(lat, lon, radius, walk_speed, max_walk_min=15):
             if (name, kind) not in seen_names and wm <= max_walk_min:
                 seen_names.add((name, kind))
                 out["all_transit"].append({"name": name, "kind": kind, "dist_m": round(d), "walk_min": wm})
-            continue
-        if d > radius: continue
+    for el in (amen or {}).get("elements", []):
+        t = el.get("tags", {})
+        la = el.get("lat") or el.get("center", {}).get("lat"); lo = el.get("lon") or el.get("center", {}).get("lon")
+        if la is None or _dist(lat, lon, la, lo) > radius: continue
         if t.get("highway") == "bus_stop": out["bus_stops"] += 1
         elif t.get("shop"): out["shops"] += 1
         elif t.get("amenity") == "pharmacy": out["pharmacies"] += 1

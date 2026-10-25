@@ -16,7 +16,7 @@ def transport_score(osm, tcfg):
     return min(10, base + min(1.5, osm["bus_stops"] / 6))
 
 def shops_score(osm):
-    if not osm: return None
+    if not osm or osm.get("partial"): return None
     n = osm["shops"] + osm["pharmacies"] + osm["food"] // 3 + osm["parks"]
     return min(10, round(n / 2.5, 1))
 
