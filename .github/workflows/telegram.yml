@@ -1,0 +1,39 @@
+name: telegram-query
+# Lancé par le relais Cloudflare quand tu écris au bot Telegram (lien d'annonce ou adresse).
+on:
+  workflow_dispatch:
+    inputs:
+      chat_id:
+        description: "Identifiant du chat Telegram"
+        required: true
+      text:
+        description: "Message reçu (lien ou adresse)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telegram-query        # séparé du job planifié : les deux peuvent tourner sans s'annuler
+  cancel-in-progress: false
+
+jobs:
+  query:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Analyse
+        env:
+          # le texte passe par des variables d'environnement (jamais directement dans la commande shell)
+          CHAT_ID: ${{ inputs.chat_id }}
+          QUERY_TEXT: ${{ inputs.text }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m agent.query

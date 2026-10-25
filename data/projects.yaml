@@ -1,0 +1,130 @@
+# ============================================================================
+#  PROJETS DE TRANSPORT FUTURS  -  utilisé pour la "note transport futur"
+#  Calendriers vérifiés le 25/10/2026 (sources en commentaire). Ils bougent souvent :
+#  relis ce fichier tous les 3 mois et corrige les dates.
+#
+#  status (fiabilité du projet) :
+#    date_officielle  mise en service datée officiellement et travaux terminés ou presque  (poids 1.0)
+#    en_travaux       chantier en cours, date annoncée mais pouvant glisser                (poids 0.85)
+#    finance          décidé/financé mais chantier pas vraiment avancé                     (poids 0.6)
+#    etude            à l'étude, non financé ou date incertaine                            (poids 0.3)
+#  kind d'une gare :
+#    new      nouvelle gare/station (nouvel accès au réseau)          -> bonus max +3.0
+#    upgrade  gare existante qui gagne une ligne ou une meilleure desserte -> bonus max +2.0
+#  lat/lon : facultatif. Sans coordonnées, l'agent retrouve la gare via OpenStreetMap ; si elle n'y est
+#  pas, il signale seulement que le projet touche la commune (sans l'inclure dans la note).
+#  Pour ajouter une gare : copie une ligne "- {name: ...}" et renseigne communes.
+# ============================================================================
+updated: "2026-10-25"
+
+projects:
+  - id: rer-e-eole
+    name: "RER E prolongé jusqu'à Mantes-la-Jolie (Eole)"
+    status: date_officielle
+    open: "2027-02-28"
+    open_label: "28 février 2027"
+    benefit: "RER E direct vers La Défense et Paris-Haussmann (Mantes-la-Jolie ~40 min de La Défense)"
+    source: "https://www.rer-eole.fr/contact-faq/"
+    stations:
+      - {name: "Houilles - Carrières-sur-Seine", kind: upgrade, communes: ["Houilles", "Carrières-sur-Seine"]}
+      - {name: "Poissy", kind: upgrade, communes: ["Poissy"]}
+      - {name: "Villennes-sur-Seine", kind: upgrade, communes: ["Villennes-sur-Seine"]}
+      - {name: "Les Clairières de Verneuil", kind: upgrade, communes: ["Verneuil-sur-Seine"]}
+      - {name: "Vernouillet - Verneuil", kind: upgrade, communes: ["Vernouillet", "Verneuil-sur-Seine"]}
+      - {name: "Les Mureaux", kind: upgrade, communes: ["Les Mureaux"]}
+      - {name: "Aubergenville - Élisabethville", kind: upgrade, communes: ["Aubergenville"]}
+      - {name: "Épône - Mézières", kind: upgrade, communes: ["Épône", "Mézières-sur-Seine"]}
+      - {name: "Mantes-la-Jolie", kind: upgrade, communes: ["Mantes-la-Jolie"]}
+
+  - id: ligne-18-saclay
+    name: "Ligne 18 (Massy-Palaiseau → Christ de Saclay)"
+    status: date_officielle
+    open: "2026-12-31"
+    open_label: "décembre 2026"
+    benefit: "Métro automatique vers le plateau de Saclay"
+    source: "https://www.constructionbtp.com/rail/article/2026/09/25/156287/grand-paris-express-les-mises-service-des-lignes-16-17-repoussees"
+    stations:
+      - {name: "Massy - Palaiseau", kind: upgrade, communes: ["Massy", "Palaiseau"]}
+      - {name: "Polytechnique", kind: new, communes: ["Palaiseau"]}
+      - {name: "Université Paris-Saclay", kind: new, communes: ["Orsay", "Gif-sur-Yvette", "Saint-Aubin"]}
+      - {name: "Christ de Saclay", kind: new, communes: ["Saclay"]}
+
+  - id: ligne-18-versailles
+    name: "Ligne 18 (Christ de Saclay → Versailles Chantiers)"
+    status: en_travaux
+    open: "2030-12-31"
+    open_label: "2030"
+    benefit: "Métro automatique Versailles – Saint-Quentin – Saclay – Orly (Versailles à ~30 min d'Orly)"
+    source: "https://www.grandparisexpress.fr/ligne-18"
+    stations:
+      - {name: "Guyancourt", kind: new, communes: ["Guyancourt"]}
+      - {name: "Satory", kind: new, communes: ["Versailles"]}
+      - {name: "Versailles Chantiers", kind: upgrade, communes: ["Versailles"], lat: 48.794722, lon: 2.136667}
+
+  - id: ligne-15-sud
+    name: "Ligne 15 Sud (Pont de Sèvres → Noisy-Champs)"
+    status: en_travaux
+    open: "2027-10-31"
+    open_label: "automne 2027 (déjà reportée)"
+    benefit: "Rocade en métro automatique sans passer par Paris (Pont de Sèvres – Noisy-Champs en ~37 min)"
+    source: "https://www.plan-metro-paris.com/grand-paris-express-retard-lignes-15-16-17/"
+    note: "Noms des gares à vérifier si une gare n'est jamais détectée."
+    stations:
+      - {name: "Pont de Sèvres", kind: upgrade, communes: ["Boulogne-Billancourt", "Sèvres"]}
+      - {name: "Issy RER", kind: upgrade, communes: ["Issy-les-Moulineaux"]}
+      - {name: "Fort d'Issy - Vanves - Clamart", kind: new, communes: ["Issy-les-Moulineaux", "Vanves", "Clamart"]}
+      - {name: "Châtillon - Montrouge", kind: new, communes: ["Châtillon", "Montrouge"]}
+      - {name: "Bagneux", kind: new, communes: ["Bagneux"]}
+      - {name: "Arcueil - Cachan", kind: new, communes: ["Arcueil", "Cachan"]}
+      - {name: "Villejuif Institut Gustave Roussy", kind: new, communes: ["Villejuif"]}
+      - {name: "Villejuif Louis Aragon", kind: new, communes: ["Villejuif"]}
+      - {name: "Vitry Centre", kind: new, communes: ["Vitry-sur-Seine"]}
+      - {name: "Les Ardoines", kind: new, communes: ["Vitry-sur-Seine"]}
+      - {name: "Le Vert de Maisons", kind: new, communes: ["Maisons-Alfort"]}
+      - {name: "Créteil l'Échat", kind: new, communes: ["Créteil"]}
+      - {name: "Saint-Maur - Créteil", kind: new, communes: ["Saint-Maur-des-Fossés", "Créteil"]}
+      - {name: "Champigny Centre", kind: new, communes: ["Champigny-sur-Marne"]}
+      - {name: "Bry - Villiers - Champigny", kind: new, communes: ["Bry-sur-Marne", "Villiers-sur-Marne", "Champigny-sur-Marne"]}
+      - {name: "Noisy - Champs", kind: upgrade, communes: ["Noisy-le-Grand", "Champs-sur-Marne"]}
+
+  - id: ligne-17
+    name: "Ligne 17 (Saint-Denis Pleyel → Le Bourget → Gonesse → Villepinte)"
+    status: en_travaux
+    open: "2028-12-31"
+    open_label: "fin 2028 (décalée d'un an en sept. 2026, calendrier fragile)"
+    benefit: "Métro automatique vers Saint-Denis Pleyel ; Gonesse est la seule gare du Val-d'Oise du Grand Paris Express"
+    source: "https://laclepublique.fr/ile-de-france/articles/2026/2026-09-20-ligne-17-tunnel-entierement-creuse/"
+    stations:
+      - {name: "Triangle de Gonesse", kind: new, communes: ["Gonesse"]}
+      - {name: "Parc des Expositions", kind: new, communes: ["Villepinte"]}
+      - {name: "Le Bourget Aéroport", kind: new, communes: ["Le Bourget"]}
+
+  - id: ligne-15-ouest
+    name: "Ligne 15 Ouest (Pont de Sèvres → La Défense → Saint-Denis Pleyel)"
+    status: en_travaux
+    open: "2031-12-31"
+    open_label: "fin 2031"
+    benefit: "Métro automatique rocade ouest ; La Défense à ~13 min de Saint-Denis Pleyel"
+    source: "https://www.grandparisexpress.fr/ligne-15-ouest"
+    stations:
+      - {name: "Saint-Cloud", kind: upgrade, communes: ["Saint-Cloud"]}
+      - {name: "Rueil - Suresnes Mont-Valérien", kind: new, communes: ["Rueil-Malmaison", "Suresnes"]}
+      - {name: "Nanterre La Boule", kind: new, communes: ["Nanterre"], lat: 48.887778, lon: 2.201667}
+      - {name: "Nanterre La Folie", kind: upgrade, communes: ["Nanterre"], lat: 48.898056, lon: 2.226111}
+      - {name: "La Défense", kind: upgrade, communes: ["Puteaux", "Courbevoie"], lat: 48.889444, lon: 2.236111}
+      - {name: "Bécon-les-Bruyères", kind: upgrade, communes: ["Courbevoie", "Bois-Colombes"], lat: 48.905278, lon: 2.266944}
+      - {name: "Bois-Colombes", kind: upgrade, communes: ["Bois-Colombes"]}
+      - {name: "Les Agnettes", kind: new, communes: ["Asnières-sur-Seine", "Gennevilliers"], lat: 48.9225, lon: 2.2875}
+      - {name: "Les Grésillons", kind: new, communes: ["Gennevilliers", "Saint-Ouen-sur-Seine"]}
+      - {name: "Saint-Denis Pleyel", kind: upgrade, communes: ["Saint-Denis"]}
+
+  - id: tram-t1-nanterre
+    name: "Tram T1 prolongé de Colombes à Nanterre puis Rueil-Malmaison"
+    status: etude
+    open: "2031-12-31"
+    open_label: "vers 2031 ou après (source : ville de Nanterre)"
+    benefit: "Tramway vers Nanterre (Université, La Boule) puis Rueil-Malmaison"
+    source: "https://www.nanterre.fr/vie-citoyenne/presentation-de-la-ville/les-politiques-publiques/politique-publique-les-transports-publics"
+    stations:
+      - {name: "Petit Nanterre", kind: new, communes: ["Nanterre"]}
+      - {name: "Plateau - Mont-Valérien", kind: new, communes: ["Nanterre", "Rueil-Malmaison"]}

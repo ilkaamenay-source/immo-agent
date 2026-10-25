@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: "17 */3 * * *"     # toutes les 3 h (UTC) ; modifie à ta guise
   workflow_dispatch:           # bouton "Run workflow" pour tester à la main
+  push:
+    paths: ["manual_urls.txt"]  # se relance dès que tu modifies cette liste
 
 permissions:
   contents: write              # pour sauvegarder state/seen.json

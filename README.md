@@ -41,3 +41,19 @@ python tests/test_local.py           # tests des filtres / liens / note
   risques et prix DVF sont des **données mesurées**.
 - DVF (API communautaire) et Géorisques sont en « best-effort » : s'ils ne répondent pas, la ligne est omise.
 - Repo privé : ~2000 min/mois gratuites ; ce workflow en consomme ~1-2 min par passage.
+
+---
+## Évolution 1 : interroger l'agent depuis Telegram
+Tu écris au bot un **lien d'annonce** ou une **adresse / ville** ; il répond en 30-90 s avec l'annonce (et si elle passe tes
+filtres), la note du quartier, le transport futur et une fiche de la commune.
+
+Chaîne : Telegram → *relais Cloudflare (gratuit)* → GitHub Actions (`telegram.yml`) → réponse sur Telegram.
+Le relais ignore tout chat autre que le tien, et l'agent re-vérifie `TELEGRAM_CHAT_ID`.
+
+Mise en place : voir la conversation (jeton GitHub, Worker Cloudflare avec `relay/worker.js`, `setWebhook`).
+
+## Évolution 2 : note de transport futur
+`data/projects.yaml` liste les projets (RER E/Eole, lignes 15, 17, 18 du Grand Paris Express, T1…) avec statut et date.
+Note future = note transport actuelle + bonus (nouvelle gare jusqu'à +3, gare existante mieux desservie jusqu'à +2,
+pondérés par la fiabilité du projet et le délai, total plafonné à +4). **Relis ce fichier tous les 3 mois.**
+Réglages : bloc `future_transport:` de `config.yaml` ; `weights.transport_futur` pour l'inclure dans la note globale.

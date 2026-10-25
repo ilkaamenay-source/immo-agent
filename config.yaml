@@ -29,7 +29,7 @@ sources:
 # ---------------- FILTRES (mets null pour désactiver) ----------------
 filters:
   price_min: null
-  price_max: 900              # loyer (ou prix d'achat en mode buy)
+  price_max: 850              # loyer (ou prix d'achat en mode buy)
   total_max: null             # loyer + charges
   charges_max: null
   surface_min: 35
@@ -63,6 +63,7 @@ scoring:
     calme: 3
     commerces: 2
     prix: 1                   # utilisé seulement en mode "buy" (comparaison DVF)
+    transport_futur: 0        # 0 = note future affichée à part ; mets 1-2 pour l'inclure dans la note globale
   min_score_to_notify: null   # ex: 6 -> n'envoie que les annonces notées >= 6/10
   walking_speed_m_per_min: 75
 
@@ -70,6 +71,11 @@ transport:
   max_walk_min: 15            # marche max acceptée jusqu'à une station (métro/RER/train/tram)
   ideal_walk_min: 5           # <= 5 min à pied = 10/10 ; la note baisse ensuite jusqu'à 5/10 à 15 min
   reject_if_no_station: false # true = rejette les annonces sans station dans ce délai
+
+future_transport:           # note de transport FUTUR (data/projects.yaml)
+  enabled: true
+  projects_file: data/projects.yaml
+  max_bonus: 4.0              # bonus total maximum ajouté à la note transport actuelle
 
 limits:
   max_new_per_run: 25         # protège ton quota Gemini / la durée du job

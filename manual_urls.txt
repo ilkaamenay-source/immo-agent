@@ -1,0 +1,3 @@
+# Colle ici des liens d'annonces DÉJÀ en ligne (un lien par ligne).
+# L'agent les traite au prochain passage ; ceux déjà traités sont ignorés.
+# Les lignes qui commencent par # sont ignorées.
