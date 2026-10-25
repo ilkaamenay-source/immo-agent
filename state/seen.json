@@ -1,4 +1,9 @@
 {
+ "02f1672b71b91d89": {
+  "status": "rejeté (pré-filtre)",
+  "ts": 1792961143,
+  "url": "https://www.logic-immo.com/detail-annonce/location/ile-de-france/val-d-oise-95/cergy-95000/26TSDKAH1U5Q?utm_source=crm-b2c&utm_medium=email&utm_campaign=ali_seeker_li_b2c_emailing_standard-alertwl_x_x_france_x_x_x_fr_x_email_x_x&utm_content=adimage&utm_term=1_1"
+ },
  "1c48cdceae9a1bfb": {
   "status": "envoyé",
   "ts": 1792943864,
@@ -9,10 +14,20 @@
   "ts": 1792933128,
   "url": "https://www.bienici.com/annonce/immo-facile-61669475?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
  },
+ "2d9b14e35aa9e3f9": {
+  "status": "rejeté (pré-filtre)",
+  "ts": 1792961117,
+  "url": "https://www.logic-immo.com/detail-annonce/location/ile-de-france/val-de-marne-94/creteil-94000/26QJBJ3JY3G8?utm_source=crm-b2c&utm_medium=email&utm_campaign=ali_seeker_li_b2c_emailing_standard-alertwl_x_x_france_x_x_x_fr_x_email_x_x&utm_content=adbutton&utm_term=1_1"
+ },
  "63d04798e8195bd4": {
   "status": "rejeté",
   "ts": 1792889842,
   "url": "https://www.bienici.com/annonce/immo-facile-61627114?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
+ },
+ "a1abcc0b96b54985": {
+  "status": "rejeté (pré-filtre)",
+  "ts": 1792961104,
+  "url": "https://www.logic-immo.com/detail-annonce/location/ile-de-france/val-d-oise-95/argenteuil-95100/26U8PKYZRTEV?utm_source=crm-b2c&utm_medium=email&utm_campaign=ali_seeker_li_b2c_emailing_standard-alertwl_x_x_france_x_x_x_fr_x_email_x_x&utm_content=adbutton&utm_term=1_1"
  },
  "a69438b0e1644f7a": {
   "status": "envoyé",
@@ -23,5 +38,15 @@
   "status": "envoyé",
   "ts": 1792933252,
   "url": "https://www.bienici.com/annonce/century-21-202_639_677303?at_canal=CRM&at_medium=combtoc&at_campaign=agencyAdvertisementAfterAlertCreation&at_link=Voir_Annonce&at_id_compte=6add26dd708b5700b432e1c9&at_type_emailing=email_auto"
+ },
+ "cf103340f49c498d": {
+  "status": "rejeté (pré-filtre)",
+  "ts": 1792961141,
+  "url": "https://www.logic-immo.com/detail-annonce/location/ile-de-france/val-de-marne-94/valenton-94460/267EP6TDEV3H?utm_source=crm-b2c&utm_medium=email&utm_campaign=ali_seeker_li_b2c_emailing_standard-alertwl_x_x_france_x_x_x_fr_x_email_x_x&utm_content=adbutton&utm_term=2_2"
+ },
+ "cf243c03358e014c": {
+  "status": "rejeté (pré-filtre)",
+  "ts": 1792961129,
+  "url": "https://www.logic-immo.com/detail-annonce/location/ile-de-france/yvelines-78/carrieres-sur-seine-78420/269S5J1W4QCR?utm_source=crm-b2c&utm_medium=email&utm_campaign=ali_seeker_li_b2c_emailing_standard-alertwl_x_x_france_x_x_x_fr_x_email_x_x&utm_content=adbutton&utm_term=1_2"
  }
 }
