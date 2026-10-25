@@ -66,7 +66,11 @@ def main():
         cands = [c for c in cands if url_key(c["url"]) not in seen]
         print(f"{len(cands)} nouvelle(s) annonce(s)")
 
+    start, budget = time.time(), cfg["limits"].get("max_runtime_min", 9) * 60
     for c in cands[: cfg["limits"]["max_new_per_run"]]:
+        if time.time() - start > budget:
+            print("Temps maximum atteint : les annonces restantes seront traitées au prochain passage.")
+            break
         print(f"→ {c['url']}")
         try:
             status, info = process(c, cfg, cache, a.dry_run)

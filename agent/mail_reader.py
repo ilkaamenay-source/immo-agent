@@ -54,40 +54,57 @@ def _is_listing(url, sources):
     p = urlparse(url)
     return bool(s and re.search(s["url_regex"], p.path + "?" + p.query))
 
-def extract_candidates(mails, sources, max_links_per_mail=40):
-    """Retourne [{url, source, email_text}] (liens d'annonces uniques)."""
-    found, seen = [], set()
+def _resolve(url):
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=6, stream=True, allow_redirects=True)
+        final = r.url; r.close()
+        return final
+    except requests.RequestException:
+        return None
+
+def extract_candidates(mails, sources, max_resolve_per_mail=25):
+    """Retourne [{url, source, email_text}] (liens d'annonces uniques).
+    On ne suit les redirections que pour les liens de tracking (domaine inconnu), en parallèle et en nombre limité."""
+    from concurrent.futures import ThreadPoolExecutor
+    found, seen, resolved_cache = [], set(), {}
     for m in mails:
         soup = BeautifulSoup(m["html"] or m["text"], "html.parser")
-        links = soup.find_all("a", href=True)[:300]
-        resolved = 0
-        for a in links:
+        anchors = []
+        for a in soup.find_all("a", href=True)[:300]:
             href = a["href"].strip()
-            if not href.startswith("http") or JUNK.search(href):
-                continue
-            url = href
-            if not _is_listing(url, sources) and resolved < max_links_per_mail:
-                # lien de tracking (ex: click.xxx.com) -> on suit la redirection
-                try:
-                    r = requests.get(url, headers=HEADERS, timeout=10, stream=True, allow_redirects=True)
-                    url = r.url; r.close(); resolved += 1
-                except requests.RequestException:
-                    continue
-            if not _is_listing(url, sources):
+            if href.startswith("http") and not JUNK.search(href):
+                anchors.append((a, href))
+        # liens à résoudre : domaine inconnu (tracking) et pas déjà vus
+        def _has_price(a):                          # le bloc de l'annonce contient un prix : lien prioritaire
+            node = a.find_parent(["td", "tr", "li", "div"])
+            return bool(node and "€" in node.get_text(" ", strip=True)[:700])
+        to_resolve, prio = [], {}
+        for a, href in anchors:
+            name, _s = _source_for(href, sources)
+            if name is None and href not in resolved_cache:
+                if href not in prio: to_resolve.append(href)
+                prio[href] = prio.get(href, False) or _has_price(a)
+        to_resolve = sorted(to_resolve, key=lambda h: not prio[h])[:max_resolve_per_mail]
+        if to_resolve:
+            with ThreadPoolExecutor(max_workers=8) as ex:
+                for href, final in zip(to_resolve, ex.map(_resolve, to_resolve)):
+                    resolved_cache[href] = final
+        for a, href in anchors:
+            url = href if _source_for(href, sources)[0] else resolved_cache.get(href)
+            if not url or not _is_listing(url, sources):
                 continue
             url = url.split("#")[0]
             ctx = a.get_text(" ", strip=True)
             node = a
-            for _ in range(8):                      # on remonte dans l'email jusqu'à trouver le bloc de l'annonce
+            for _ in range(8):                      # on remonte dans l'email jusqu'au bloc de l'annonce
                 node = node.find_parent(["td", "tr", "table", "div", "li"])
                 if node is None: break
                 t = node.get_text(" ", strip=True)
                 if len(t) > 700: break              # on a dépassé le bloc : on garde le précédent
                 ctx = t
                 if "€" in t and re.search(r"m\s?[²2]", t): break
-            ctx = ctx[:500]
-            name, _ = _source_for(url, sources)
+            name, _s = _source_for(url, sources)
             if url not in seen:
                 seen.add(url)
-                found.append({"url": url, "source": name, "email_text": ctx})
+                found.append({"url": url, "source": name, "email_text": ctx[:500]})
     return found

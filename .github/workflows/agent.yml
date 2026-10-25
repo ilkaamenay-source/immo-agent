@@ -17,6 +17,8 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: "1"      # affiche le log en direct (sinon il n'apparaît qu'à la fin)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
